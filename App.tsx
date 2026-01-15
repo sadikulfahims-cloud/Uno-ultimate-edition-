@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { UserProfile, GameSettings, GameMode, Card, Player, OnlineSubMode, GameRules, Lobby } from './types';
 import { INITIAL_USER_ID, AVATARS, SOUNDS } from './constants';
 import HomeView from './views/HomeView';
@@ -12,10 +12,11 @@ import OnlineSetupView from './views/OnlineSetupView';
 import LobbyView from './views/LobbyView';
 import OfflineSetupView from './views/OfflineSetupView';
 import OfflineJoinView from './views/OfflineJoinView';
+import OnlineJoinView from './views/OnlineJoinView';
 import NotificationToast from './components/NotificationToast';
 
 const App: React.FC = () => {
-  const [view, setView] = useState<'home' | 'game' | 'profile' | 'settings' | 'mailbox' | 'addFriend' | 'onlineSetup' | 'lobby' | 'offlineModeSelect' | 'offlineSetup' | 'offlineJoin'>('home');
+  const [view, setView] = useState<'home' | 'game' | 'profile' | 'settings' | 'mailbox' | 'addFriend' | 'onlineSetup' | 'lobby' | 'offlineModeSelect' | 'offlineSetup' | 'offlineJoin' | 'onlineJoin'>('home');
   const [user, setUser] = useState<UserProfile>({
     id: INITIAL_USER_ID,
     name: 'Player One',
@@ -71,7 +72,7 @@ const App: React.FC = () => {
     playSFX('click');
   };
 
-  const handleJoinLocalRoom = (room: Lobby) => {
+  const handleJoinLobby = (room: Lobby) => {
     setSubMode(room.rules.subMode);
     const updatedRoom = {
         ...room,
@@ -81,6 +82,28 @@ const App: React.FC = () => {
     setView('lobby');
     playSFX('click');
   };
+
+  // Simulate players joining online lobbies to make the demo feel "Online"
+  useEffect(() => {
+    if (view === 'lobby' && currentLobby && !currentLobby.isLocal && currentLobby.hostId === user.id) {
+      if (currentLobby.players.length < 4) {
+        const timer = setTimeout(() => {
+          const fakePlayerNames = ['AceHunter', 'UnoKing', 'WildCard', 'ShadowPlayer', 'GeminiFan'];
+          const newPlayer: Player = {
+            id: `sim-${Math.random()}`,
+            name: fakePlayerNames[Math.floor(Math.random() * fakePlayerNames.length)],
+            avatar: AVATARS[Math.floor(Math.random() * AVATARS.length)],
+            isBot: false, // Simulated as a real player joining
+            hand: [],
+            isReady: true
+          };
+          setCurrentLobby(prev => prev ? { ...prev, players: [...prev.players, newPlayer] } : null);
+          playSFX('click');
+        }, 3000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [view, currentLobby, user.id, playSFX]);
 
   const themeClasses = {
     classic: 'from-blue-900 to-blue-700',
@@ -94,6 +117,22 @@ const App: React.FC = () => {
         {view === 'home' && (
           <HomeView user={user} setView={setView} onStartGame={handleStartGame} />
         )}
+        
+        {view === 'onlineSetup' && (
+          <OnlineSetupView 
+            onBack={() => setView('home')} 
+            onCreateLobby={(rules) => createLobby(rules, false)} 
+            onJoinMode={() => setView('onlineJoin')}
+          />
+        )}
+
+        {view === 'onlineJoin' && (
+          <OnlineJoinView 
+            onBack={() => setView('onlineSetup')}
+            onJoin={handleJoinLobby}
+          />
+        )}
+
         {view === 'offlineModeSelect' && (
           <div className="flex-1 flex flex-col p-6 items-center justify-center bg-black/20">
             <h2 className="font-game text-4xl mb-12 tracking-tight text-yellow-400 text-center uppercase">Offline Room</h2>
@@ -114,6 +153,7 @@ const App: React.FC = () => {
             <button onClick={() => setView('home')} className="mt-12 text-white/50 font-bold uppercase tracking-widest hover:text-white transition-colors">Back to Home</button>
           </div>
         )}
+
         {view === 'game' && (
           <GameView 
             user={user} 
@@ -129,13 +169,7 @@ const App: React.FC = () => {
             }}
           />
         )}
-        {view === 'profile' && <ProfileView user={user} onUpdate={handleUpdateProfile} onBack={() => setView('home')} />}
-        {view === 'settings' && <SettingsView settings={settings} onUpdate={setSettings} onBack={() => setView('home')} />}
-        {view === 'mailbox' && <MailboxView requests={user.requests} onAccept={() => {}} onReject={() => {}} onBack={() => setView('home')} />}
-        {view === 'addFriend' && <AddFriendView onBack={() => setView('home')} onInvite={(id) => alert(`Invitation sent to ${id}`)} />}
-        {view === 'onlineSetup' && <OnlineSetupView onBack={() => setView('home')} onCreateLobby={(rules) => createLobby(rules, false)} />}
-        {view === 'offlineSetup' && <OfflineSetupView onBack={() => setView('offlineModeSelect')} onCreateLobby={(rules) => createLobby(rules, true)} />}
-        {view === 'offlineJoin' && <OfflineJoinView onBack={() => setView('offlineModeSelect')} onJoin={handleJoinLocalRoom} />}
+
         {view === 'lobby' && currentLobby && (
           <LobbyView 
             user={user} 
@@ -147,6 +181,13 @@ const App: React.FC = () => {
             }} 
           />
         )}
+
+        {view === 'profile' && <ProfileView user={user} onUpdate={handleUpdateProfile} onBack={() => setView('home')} />}
+        {view === 'settings' && <SettingsView settings={settings} onUpdate={setSettings} onBack={() => setView('home')} />}
+        {view === 'mailbox' && <MailboxView requests={user.requests} onAccept={() => {}} onReject={() => {}} onBack={() => setView('home')} />}
+        {view === 'addFriend' && <AddFriendView onBack={() => setView('home')} onInvite={(id) => alert(`Invitation sent to ${id}`)} />}
+        {view === 'offlineSetup' && <OfflineSetupView onBack={() => setView('offlineModeSelect')} onCreateLobby={(rules) => createLobby(rules, true)} />}
+        {view === 'offlineJoin' && <OfflineJoinView onBack={() => setView('offlineModeSelect')} onJoin={handleJoinLobby} />}
       </div>
 
       {notification && <NotificationToast message={notification.message} onClick={() => {}} onClose={() => setNotification(null)} />}

@@ -82,8 +82,13 @@ export const canPlayCard = (
   stackCount: number,
   isBlackChain: boolean
 ): boolean => {
-  // Vanishing and Ghost Swap cards can always be played to bypass effects or swap hands
-  if (card.value === 'vanishing' || card.value === 'ghostswap') return true;
+  // Vanishing can always be played to bypass a turn (and pass a stack)
+  if (card.value === 'vanishing') return true;
+
+  // Ghost Swap can only be played when no stack is active
+  if (card.value === 'ghostswap') {
+    return stackCount === 0;
+  }
 
   const isPlus = (c: Card) => 
     ['draw2', 'draw4', 'draw6', 'draw10', 'reverse4', 'all4'].includes(c.value) || 
@@ -100,13 +105,14 @@ export const canPlayCard = (
     return v;
   };
 
-  // Stacking logic
+  // Stacking logic: if being stacked, only a bigger or equal plus card can be played
   if (stackCount > 0) {
     if (!isPlus(card)) return false;
     if (isBlackChain && card.color !== 'wild') return false;
     return getPlusValue(card) >= getPlusValue(topCard);
   }
 
+  // Normal matching logic
   if (topCard.value === 'skip' && card.value === 'skip') return true;
   if (topCard.value === 'reverse' && card.value === 'reverse') return true;
   if (topCard.value === 'elitereverse' && card.value === 'elitereverse') return true;

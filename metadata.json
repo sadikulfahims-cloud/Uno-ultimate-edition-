@@ -1,0 +1,9 @@
+{
+  "name": "Uno ultimate edition ",
+  "description": "A feature-rich Uno game with online/offline modes, social features, profile management, and custom settings.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

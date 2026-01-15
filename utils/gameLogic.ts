@@ -82,8 +82,8 @@ export const canPlayCard = (
   stackCount: number,
   isBlackChain: boolean
 ): boolean => {
-  // Vanishing cards can always be played to bypass effects
-  if (card.value === 'vanishing') return true;
+  // Vanishing and Ghost Swap cards can always be played to bypass effects or swap hands
+  if (card.value === 'vanishing' || card.value === 'ghostswap') return true;
 
   const isPlus = (c: Card) => 
     ['draw2', 'draw4', 'draw6', 'draw10', 'reverse4', 'all4'].includes(c.value) || 

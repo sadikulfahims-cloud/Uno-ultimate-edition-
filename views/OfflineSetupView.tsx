@@ -2,13 +2,15 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ShieldCheck, Skull, Zap } from 'lucide-react';
 import { OnlineSubMode, GameRules } from '../types';
+import { SOUNDS } from '../constants';
 
 interface OfflineSetupViewProps {
   onBack: () => void;
   onCreateLobby: (rules: GameRules) => void;
+  playSFX: (s: keyof typeof SOUNDS) => void;
 }
 
-const OfflineSetupView: React.FC<OfflineSetupViewProps> = ({ onBack, onCreateLobby }) => {
+const OfflineSetupView: React.FC<OfflineSetupViewProps> = ({ onBack, onCreateLobby, playSFX }) => {
   const [subMode, setSubMode] = useState<OnlineSubMode>('CLASSIC');
   const [initialCards, setInitialCards] = useState<number>(7);
 
@@ -34,7 +36,7 @@ const OfflineSetupView: React.FC<OfflineSetupViewProps> = ({ onBack, onCreateLob
             {(['CLASSIC', 'NO_MERCY', 'SUPERIOR'] as OnlineSubMode[]).map(mode => (
               <button
                 key={mode}
-                onClick={() => setSubMode(mode)}
+                onClick={() => { playSFX('click'); setSubMode(mode); }}
                 className={`w-full p-4 rounded-2xl border-2 text-left transition-all ${
                   subMode === mode ? 'border-yellow-400 bg-white/10' : 'border-white/5 bg-white/5'
                 }`}
@@ -62,7 +64,7 @@ const OfflineSetupView: React.FC<OfflineSetupViewProps> = ({ onBack, onCreateLob
             min="2" 
             max="20" 
             value={initialCards} 
-            onChange={(e) => setInitialCards(parseInt(e.target.value))}
+            onChange={(e) => { playSFX('click'); setInitialCards(parseInt(e.target.value)); }}
             className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-yellow-400"
           />
           <div className="flex justify-between mt-2 text-[10px] font-black opacity-20 uppercase tracking-widest">

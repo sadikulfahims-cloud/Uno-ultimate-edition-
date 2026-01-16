@@ -2,14 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Globe, Search, RefreshCw, User, ShieldCheck } from 'lucide-react';
 import { Lobby } from '../types';
-import { AVATARS } from '../constants';
+import { AVATARS, SOUNDS } from '../constants';
 
 interface OnlineJoinViewProps {
   onBack: () => void;
   onJoin: (room: Lobby) => void;
+  playSFX: (s: keyof typeof SOUNDS) => void;
 }
 
-const OnlineJoinView: React.FC<OnlineJoinViewProps> = ({ onBack, onJoin }) => {
+const OnlineJoinView: React.FC<OnlineJoinViewProps> = ({ onBack, onJoin, playSFX }) => {
   const [rooms, setRooms] = useState<Lobby[]>([]);
   const [isSearching, setIsSearching] = useState(true);
   const [roomCode, setRoomCode] = useState('');
@@ -56,6 +57,22 @@ const OnlineJoinView: React.FC<OnlineJoinViewProps> = ({ onBack, onJoin }) => {
     return () => clearTimeout(timer);
   }, []);
 
+  const handleJoinByCode = () => {
+    playSFX('click');
+    if (roomCode.startsWith('LOBBY-')) {
+        onJoin({
+            id: roomCode,
+            hostId: 'other',
+            hostName: 'Room Host',
+            isLocal: false,
+            players: [{ id: 'other', name: 'Room Host', avatar: AVATARS[1], isBot: false, hand: [], isReady: true }],
+            rules: { subMode: 'CLASSIC', initialCards: 7 }
+        });
+    } else {
+        alert("Enter a valid Lobby Code (LOBBY-XXXX)");
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col p-6 overflow-hidden bg-black/20">
       <div className="flex items-center gap-4 mb-8">
@@ -77,20 +94,7 @@ const OnlineJoinView: React.FC<OnlineJoinViewProps> = ({ onBack, onJoin }) => {
               className="flex-1 bg-white/10 border-white/5 rounded-2xl py-4 px-5 focus:ring-2 focus:ring-yellow-400 outline-none uppercase font-mono text-sm"
             />
             <button 
-              onClick={() => {
-                if (roomCode.startsWith('LOBBY-')) {
-                    onJoin({
-                        id: roomCode,
-                        hostId: 'other',
-                        hostName: 'Room Host',
-                        isLocal: false,
-                        players: [{ id: 'other', name: 'Room Host', avatar: AVATARS[1], isBot: false, hand: [], isReady: true }],
-                        rules: { subMode: 'CLASSIC', initialCards: 7 }
-                    });
-                } else {
-                    alert("Enter a valid Lobby Code (LOBBY-XXXX)");
-                }
-              }}
+              onClick={handleJoinByCode}
               className="px-6 bg-yellow-400 text-blue-900 rounded-2xl font-bold hover:bg-yellow-300 transition-colors"
             >
               JOIN

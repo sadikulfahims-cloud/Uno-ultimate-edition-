@@ -11,8 +11,6 @@ export const createDeck = (mode: OnlineSubMode): Card[] => {
   };
 
   if (mode === 'CLASSIC') {
-    // 72 cards: 0-9 (1x0, 2x1-9), 2x 2+, 2x skip, 2x reverse per color. 
-    // Black: 4 wild, 4 wild 4+
     COLORS.forEach(color => {
       addCard(color, '0');
       for (let i = 1; i <= 9; i++) {
@@ -30,9 +28,8 @@ export const createDeck = (mode: OnlineSubMode): Card[] => {
       addCard('wild', 'wild');
       addCard('wild', 'draw4');
     }
-  } else if (mode === 'NO_MERCY') {
-    // 136 cards: 2 sets 0-9, 2x 2+, 2x 4+, 2x reverse, 4x skip per color.
-    // Black: 4 wild, 4 reverse 4+, 4 wild 6+, 4 wild 10+, 4 Ghost Swap
+  } else if (mode === 'NO_MERCY' || mode === 'SUPERIOR') {
+    // Base No Mercy cards
     COLORS.forEach(color => {
       for (let j = 0; j < 2; j++) {
         for (let i = 0; i <= 9; i++) addCard(color, i.toString() as CardValue);
@@ -44,23 +41,23 @@ export const createDeck = (mode: OnlineSubMode): Card[] => {
       }
       for (let i = 0; i < 4; i++) addCard(color, 'skip');
     });
+
+    // Special No Mercy Wilds
     for (let i = 0; i < 4; i++) {
       addCard('wild', 'wild');
-      addCard('wild', 'reverse4');
-      addCard('wild', 'draw6');
-      addCard('wild', 'draw10');
+      addCard('wild', 'reverse4'); // Reverse 4+
+      addCard('wild', 'draw6');    // 6+
+      addCard('wild', 'draw10');   // 10+
       addCard('wild', 'ghostswap');
     }
-  } else if (mode === 'SUPERIOR') {
-    // 172 cards: No Mercy + 8 vanishing, 8 ghost swap, 6 elite reverse, 8 hybrid, 6 all 4+
-    const noMercyBase = createDeck('NO_MERCY');
-    deck.push(...noMercyBase);
-    
-    for (let i = 0; i < 8; i++) addCard('wild', 'vanishing');
-    for (let i = 0; i < 8; i++) addCard('wild', 'ghostswap');
-    for (let i = 0; i < 6; i++) addCard('wild', 'elitereverse');
-    for (let i = 0; i < 8; i++) addCard('wild', 'hybrid', 'draw4');
-    for (let i = 0; i < 6; i++) addCard('wild', 'all4');
+
+    if (mode === 'SUPERIOR') {
+      for (let i = 0; i < 8; i++) addCard('wild', 'vanishing');
+      for (let i = 0; i < 4; i++) addCard('wild', 'ghostswap');
+      for (let i = 0; i < 6; i++) addCard('wild', 'elitereverse');
+      for (let i = 0; i < 8; i++) addCard('wild', 'hybrid', 'draw4');
+      for (let i = 0; i < 6; i++) addCard('wild', 'all4');
+    }
   }
 
   return shuffle(deck);
@@ -82,10 +79,8 @@ export const canPlayCard = (
   stackCount: number,
   isBlackChain: boolean
 ): boolean => {
-  // Vanishing can always be played to bypass a turn (and pass a stack)
   if (card.value === 'vanishing') return true;
 
-  // Ghost Swap can only be played when no stack is active
   if (card.value === 'ghostswap') {
     return stackCount === 0;
   }
@@ -105,16 +100,15 @@ export const canPlayCard = (
     return v;
   };
 
-  // Stacking logic: if being stacked, only a bigger or equal plus card can be played
   if (stackCount > 0) {
     if (!isPlus(card)) return false;
     if (isBlackChain && card.color !== 'wild') return false;
     return getPlusValue(card) >= getPlusValue(topCard);
   }
 
-  // Normal matching logic
   if (topCard.value === 'skip' && card.value === 'skip') return true;
   if (topCard.value === 'reverse' && card.value === 'reverse') return true;
+  if (topCard.value === 'reverse4' && card.value === 'reverse4') return true;
   if (topCard.value === 'elitereverse' && card.value === 'elitereverse') return true;
 
   if (card.color === 'wild') return true;

@@ -2,14 +2,16 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Zap, Skull, ShieldCheck, Globe, PlusCircle, Search } from 'lucide-react';
 import { OnlineSubMode, GameRules } from '../types';
+import { SOUNDS } from '../constants';
 
 interface OnlineSetupViewProps {
   onBack: () => void;
   onCreateLobby: (rules: GameRules) => void;
   onJoinMode: () => void;
+  playSFX: (s: keyof typeof SOUNDS) => void;
 }
 
-const OnlineSetupView: React.FC<OnlineSetupViewProps> = ({ onBack, onCreateLobby, onJoinMode }) => {
+const OnlineSetupView: React.FC<OnlineSetupViewProps> = ({ onBack, onCreateLobby, onJoinMode, playSFX }) => {
   const [subMode, setSubMode] = useState<OnlineSubMode>('CLASSIC');
   const [initialCards, setInitialCards] = useState<number>(7);
   const [activeTab, setActiveTab] = useState<'HOST' | 'JOIN'>('HOST');
@@ -40,7 +42,7 @@ const OnlineSetupView: React.FC<OnlineSetupViewProps> = ({ onBack, onCreateLobby
 
       <div className="flex gap-2 mb-8 bg-black/40 p-1 rounded-2xl border border-white/5">
         <button 
-          onClick={() => setActiveTab('HOST')}
+          onClick={() => { playSFX('click'); setActiveTab('HOST'); }}
           className={`flex-1 py-3 rounded-xl font-game text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'HOST' ? 'bg-yellow-400 text-blue-900 shadow-lg' : 'text-white/40'}`}
         >
           <PlusCircle size={18} /> HOST MATCH
@@ -61,7 +63,7 @@ const OnlineSetupView: React.FC<OnlineSetupViewProps> = ({ onBack, onCreateLobby
               {(['CLASSIC', 'NO_MERCY', 'SUPERIOR'] as OnlineSubMode[]).map(mode => (
                 <button
                   key={mode}
-                  onClick={() => setSubMode(mode)}
+                  onClick={() => { playSFX('click'); setSubMode(mode); }}
                   className={`w-full p-4 rounded-2xl border-2 text-left transition-all ${
                     subMode === mode ? 'border-yellow-400 bg-white/10 shadow-lg' : 'border-white/5 bg-white/5'
                   }`}
@@ -90,7 +92,7 @@ const OnlineSetupView: React.FC<OnlineSetupViewProps> = ({ onBack, onCreateLobby
               min="2" 
               max="20" 
               value={initialCards} 
-              onChange={(e) => setInitialCards(parseInt(e.target.value))}
+              onChange={(e) => { playSFX('click'); setInitialCards(parseInt(e.target.value)); }}
               className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-yellow-400"
             />
           </div>

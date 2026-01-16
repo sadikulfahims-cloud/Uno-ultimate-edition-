@@ -2,15 +2,17 @@
 import React from 'react';
 import { FriendRequest } from '../types';
 import { ChevronLeft, Inbox, Check, X, User } from 'lucide-react';
+import { SOUNDS } from '../constants';
 
 interface MailboxViewProps {
   requests: FriendRequest[];
   onAccept: (id: string) => void;
   onReject: (id: string) => void;
   onBack: () => void;
+  playSFX: (s: keyof typeof SOUNDS) => void;
 }
 
-const MailboxView: React.FC<MailboxViewProps> = ({ requests, onAccept, onReject, onBack }) => {
+const MailboxView: React.FC<MailboxViewProps> = ({ requests, onAccept, onReject, onBack, playSFX }) => {
   return (
     <div className="flex-1 flex flex-col p-6 overflow-hidden">
       <div className="flex items-center gap-4 mb-8">
@@ -40,13 +42,13 @@ const MailboxView: React.FC<MailboxViewProps> = ({ requests, onAccept, onReject,
               </div>
               <div className="flex gap-2">
                 <button 
-                  onClick={() => onReject(req.id)}
+                  onClick={() => { playSFX('click'); onReject(req.id); }}
                   className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500 hover:text-white transition-colors"
                 >
                   <X size={20} />
                 </button>
                 <button 
-                  onClick={() => onAccept(req.id)}
+                  onClick={() => { playSFX('click'); onAccept(req.id); }}
                   className="p-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500 hover:text-white transition-colors"
                 >
                   <Check size={20} />

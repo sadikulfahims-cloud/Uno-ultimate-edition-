@@ -1,17 +1,20 @@
 
 import React, { useState } from 'react';
 import { ChevronLeft, Search, UserPlus, ShieldAlert } from 'lucide-react';
+import { SOUNDS } from '../constants';
 
 interface AddFriendViewProps {
   onBack: () => void;
   onInvite: (id: string) => void;
+  playSFX: (s: keyof typeof SOUNDS) => void;
 }
 
-const AddFriendView: React.FC<AddFriendViewProps> = ({ onBack, onInvite }) => {
+const AddFriendView: React.FC<AddFriendViewProps> = ({ onBack, onInvite, playSFX }) => {
   const [searchId, setSearchId] = useState('');
   const [foundUser, setFoundUser] = useState<{id: string, name: string} | null>(null);
 
   const handleSearch = () => {
+    playSFX('click');
     // Mock search logic
     if (searchId.length > 5) {
       setFoundUser({ id: searchId, name: `Player_${searchId.split('-')[1] || 'Unknown'}` });

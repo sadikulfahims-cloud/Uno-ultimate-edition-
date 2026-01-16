@@ -2,14 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Wifi, User, RefreshCw, Signal } from 'lucide-react';
 import { Lobby } from '../types';
-import { AVATARS } from '../constants';
+import { AVATARS, SOUNDS } from '../constants';
 
 interface OfflineJoinViewProps {
   onBack: () => void;
   onJoin: (room: Lobby) => void;
+  playSFX: (s: keyof typeof SOUNDS) => void;
 }
 
-const OfflineJoinView: React.FC<OfflineJoinViewProps> = ({ onBack, onJoin }) => {
+const OfflineJoinView: React.FC<OfflineJoinViewProps> = ({ onBack, onJoin, playSFX }) => {
   const [rooms, setRooms] = useState<Lobby[]>([]);
   const [isSearching, setIsSearching] = useState(true);
 
@@ -54,6 +55,12 @@ const OfflineJoinView: React.FC<OfflineJoinViewProps> = ({ onBack, onJoin }) => 
 
     return () => clearTimeout(timer);
   }, []);
+
+  const handleRefresh = () => {
+    playSFX('click');
+    setIsSearching(true);
+    setRooms([]);
+  };
 
   return (
     <div className="flex-1 flex flex-col p-6 overflow-hidden">
@@ -109,7 +116,7 @@ const OfflineJoinView: React.FC<OfflineJoinViewProps> = ({ onBack, onJoin }) => 
       </div>
 
       <button 
-        onClick={() => { setIsSearching(true); setRooms([]); /* re-trigger search */ }}
+        onClick={handleRefresh}
         className="mt-6 py-4 border-2 border-white/10 text-white/50 font-bold uppercase tracking-widest rounded-2xl hover:bg-white/5 hover:text-white transition-all flex items-center justify-center gap-2"
       >
         <RefreshCw size={16} /> Refresh List

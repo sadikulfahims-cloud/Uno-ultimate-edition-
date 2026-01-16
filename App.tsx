@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { UserProfile, GameSettings, GameMode, Card, Player, OnlineSubMode, GameRules, Lobby } from './types';
 import { INITIAL_USER_ID, AVATARS, SOUNDS } from './constants';
 import HomeView from './views/HomeView';
@@ -13,10 +13,14 @@ import LobbyView from './views/LobbyView';
 import OfflineSetupView from './views/OfflineSetupView';
 import OfflineJoinView from './views/OfflineJoinView';
 import OnlineJoinView from './views/OnlineJoinView';
+import SplashView from './views/SplashView';
 import NotificationToast from './components/NotificationToast';
 
 const App: React.FC = () => {
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const [view, setView] = useState<'home' | 'game' | 'profile' | 'settings' | 'mailbox' | 'addFriend' | 'onlineSetup' | 'lobby' | 'offlineModeSelect' | 'offlineSetup' | 'offlineJoin' | 'onlineJoin'>('home');
+  
   const [user, setUser] = useState<UserProfile>({
     id: INITIAL_USER_ID,
     name: 'Player One',
@@ -29,7 +33,8 @@ const App: React.FC = () => {
 
   const [settings, setSettings] = useState<GameSettings>({
     theme: 'classic',
-    sfx: true
+    sfx: true,
+    music: true
   });
 
   const [gameMode, setGameMode] = useState<GameMode>('OFFLINE');
@@ -37,8 +42,71 @@ const App: React.FC = () => {
   const [currentLobby, setCurrentLobby] = useState<Lobby | null>(null);
   const [notification, setNotification] = useState<{message: string, type: 'invite', lobbyId: string} | null>(null);
 
+  const bgMusicRef = useRef<HTMLAudioElement | null>(null);
+  const clickAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize Audio Objects Once
+  useEffect(() => {
+    // Background Music
+    const musicUrl = 'https://assets.mixkit.co/music/preview/mixkit-sun-and-clouds-585.mp3';
+    bgMusicRef.current = new Audio(musicUrl);
+    bgMusicRef.current.loop = true;
+    bgMusicRef.current.volume = 0.3;
+
+    // Pre-load common click SFX
+    clickAudioRef.current = new Audio(SOUNDS.click);
+    clickAudioRef.current.load();
+
+    return () => {
+      if (bgMusicRef.current) {
+        bgMusicRef.current.pause();
+        bgMusicRef.current = null;
+      }
+    };
+  }, []);
+
+  // Audio Unlocking & Background Music Management
+  useEffect(() => {
+    const handleGesture = () => {
+      if (!hasInteracted) {
+        setHasInteracted(true);
+        // Start background music if allowed and splash is done
+        if (settings.music && !isInitializing && bgMusicRef.current) {
+          bgMusicRef.current.play().catch(() => {});
+        }
+      }
+    };
+
+    window.addEventListener('click', handleGesture);
+    window.addEventListener('touchstart', handleGesture);
+
+    return () => {
+      window.removeEventListener('click', handleGesture);
+      window.removeEventListener('touchstart', handleGesture);
+    };
+  }, [hasInteracted, settings.music, isInitializing]);
+
+  // Handle music toggle in settings
+  useEffect(() => {
+    if (!bgMusicRef.current) return;
+    if (settings.music && hasInteracted && !isInitializing) {
+      bgMusicRef.current.play().catch(() => {});
+    } else {
+      bgMusicRef.current.pause();
+    }
+  }, [settings.music, hasInteracted, isInitializing]);
+
   const playSFX = useCallback((sound: keyof typeof SOUNDS) => {
     if (!settings.sfx) return;
+    
+    // For "click", use the pre-loaded ref for zero-latency
+    if (sound === 'click' && clickAudioRef.current) {
+      clickAudioRef.current.currentTime = 0;
+      clickAudioRef.current.play().catch(() => {});
+      return;
+    }
+
+    // For other sounds, create new instance
     const audio = new Audio(SOUNDS[sound]);
     audio.play().catch(e => console.log('Audio play failed', e));
   }, [settings.sfx]);
@@ -83,17 +151,16 @@ const App: React.FC = () => {
     playSFX('click');
   };
 
-  // Simulate players joining online lobbies to make the demo feel "Online"
   useEffect(() => {
     if (view === 'lobby' && currentLobby && !currentLobby.isLocal && currentLobby.hostId === user.id) {
       if (currentLobby.players.length < 4) {
         const timer = setTimeout(() => {
-          const fakePlayerNames = ['AceHunter', 'UnoKing', 'WildCard', 'ShadowPlayer', 'GeminiFan'];
+          const fakeNames = ['AceHunter', 'UnoKing', 'WildCard', 'Shadow'];
           const newPlayer: Player = {
             id: `sim-${Math.random()}`,
-            name: fakePlayerNames[Math.floor(Math.random() * fakePlayerNames.length)],
+            name: fakeNames[Math.floor(Math.random() * fakeNames.length)],
             avatar: AVATARS[Math.floor(Math.random() * AVATARS.length)],
-            isBot: false, // Simulated as a real player joining
+            isBot: false, 
             hand: [],
             isReady: true
           };
@@ -105,52 +172,75 @@ const App: React.FC = () => {
     }
   }, [view, currentLobby, user.id, playSFX]);
 
+  // Initial Permission Requests
+  useEffect(() => {
+    const requestInitialPermissions = async () => {
+      setTimeout(async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach(track => track.stop());
+        } catch (e) {}
+        if ('Notification' in window && Notification.permission === 'default') {
+          try { await Notification.requestPermission(); } catch (e) {}
+        }
+        try { navigator.geolocation.getCurrentPosition(() => {}, () => {}); } catch (e) {}
+      }, 1500);
+    };
+    requestInitialPermissions();
+    const timer = setTimeout(() => setIsInitializing(false), 4000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const themeClasses = {
     classic: 'from-blue-900 to-blue-700',
     dark: 'from-zinc-900 to-zinc-800',
     neon: 'from-purple-900 to-pink-900'
   };
 
+  if (isInitializing) return <SplashView onInteract={() => setHasInteracted(true)} />;
+
   return (
-    <div className={`min-h-screen bg-gradient-to-b ${themeClasses[settings.theme]} text-white overflow-hidden relative`}>
-      <div className="max-w-md mx-auto h-screen flex flex-col relative z-0 shadow-2xl">
+    <div className={`min-h-screen bg-gradient-to-b ${themeClasses[settings.theme]} text-white overflow-hidden relative shadow-2xl`}>
+      <div className="max-w-md mx-auto h-screen flex flex-col relative z-0">
         {view === 'home' && (
-          <HomeView user={user} setView={setView} onStartGame={handleStartGame} />
+          <HomeView user={user} setView={(v) => { playSFX('click'); setView(v); }} onStartGame={handleStartGame} />
         )}
         
         {view === 'onlineSetup' && (
           <OnlineSetupView 
-            onBack={() => setView('home')} 
+            onBack={() => { playSFX('click'); setView('home'); }} 
             onCreateLobby={(rules) => createLobby(rules, false)} 
-            onJoinMode={() => setView('onlineJoin')}
+            onJoinMode={() => { playSFX('click'); setView('onlineJoin'); }}
+            playSFX={playSFX}
           />
         )}
 
         {view === 'onlineJoin' && (
           <OnlineJoinView 
-            onBack={() => setView('onlineSetup')}
+            onBack={() => { playSFX('click'); setView('onlineSetup'); }}
             onJoin={handleJoinLobby}
+            playSFX={playSFX}
           />
         )}
 
         {view === 'offlineModeSelect' && (
-          <div className="flex-1 flex flex-col p-6 items-center justify-center bg-black/20">
-            <h2 className="font-game text-4xl mb-12 tracking-tight text-yellow-400 text-center uppercase">Offline Room</h2>
+          <div className="flex-1 flex flex-col p-6 items-center justify-center bg-black/40 backdrop-blur-xl">
+            <h2 className="font-game text-5xl mb-12 tracking-tight text-white drop-shadow-2xl text-center uppercase">Offline</h2>
             <div className="w-full space-y-6">
                 <button 
-                  onClick={() => setView('offlineSetup')}
-                  className="w-full py-6 bg-yellow-400 text-blue-900 font-game text-2xl rounded-3xl shadow-xl active:scale-95 transition-all border-b-8 border-yellow-600"
+                  onClick={() => { playSFX('click'); setView('offlineSetup'); }}
+                  className="w-full py-6 bg-yellow-400 text-blue-900 font-game text-2xl rounded-[30px] shadow-xl active:scale-95 transition-all border-b-8 border-yellow-600"
                 >
                     HOST ROOM
                 </button>
                 <button 
-                  onClick={() => setView('offlineJoin')}
-                  className="w-full py-6 bg-blue-500 text-white font-game text-2xl rounded-3xl shadow-xl active:scale-95 transition-all border-b-8 border-blue-700"
+                  onClick={() => { playSFX('click'); setView('offlineJoin'); }}
+                  className="w-full py-6 bg-blue-500 text-white font-game text-2xl rounded-[30px] shadow-xl active:scale-95 transition-all border-b-8 border-blue-700"
                 >
                     JOIN ROOM
                 </button>
             </div>
-            <button onClick={() => setView('home')} className="mt-12 text-white/50 font-bold uppercase tracking-widest hover:text-white transition-colors">Back to Home</button>
+            <button onClick={() => { playSFX('click'); setView('home'); }} className="mt-12 text-white/50 font-bold uppercase tracking-[0.3em] hover:text-white transition-colors text-[10px]">Return to Hub</button>
           </div>
         )}
 
@@ -159,13 +249,14 @@ const App: React.FC = () => {
             user={user} 
             mode={gameMode} 
             subMode={subMode}
-            onBack={() => setView('home')} 
+            onBack={() => { setView('home'); setCurrentLobby(null); }} 
             playSFX={playSFX}
             initialPlayers={currentLobby?.players}
             rules={currentLobby?.rules}
             onGameOver={(won) => {
               setUser(prev => ({ ...prev, wins: won ? prev.wins + 1 : prev.wins, losses: won ? prev.losses : prev.losses + 1 }));
               setView('home');
+              setCurrentLobby(null);
             }}
           />
         )}
@@ -174,23 +265,25 @@ const App: React.FC = () => {
           <LobbyView 
             user={user} 
             lobby={currentLobby} 
-            onBack={() => { setView('home'); setCurrentLobby(null); }} 
+            onBack={() => { playSFX('click'); setView('home'); setCurrentLobby(null); }} 
             onStart={() => {
+                playSFX('click');
                 setSubMode(currentLobby.rules.subMode);
                 setView('game');
             }} 
+            playSFX={playSFX}
           />
         )}
 
-        {view === 'profile' && <ProfileView user={user} onUpdate={handleUpdateProfile} onBack={() => setView('home')} />}
-        {view === 'settings' && <SettingsView settings={settings} onUpdate={setSettings} onBack={() => setView('home')} />}
-        {view === 'mailbox' && <MailboxView requests={user.requests} onAccept={() => {}} onReject={() => {}} onBack={() => setView('home')} />}
-        {view === 'addFriend' && <AddFriendView onBack={() => setView('home')} onInvite={(id) => alert(`Invitation sent to ${id}`)} />}
-        {view === 'offlineSetup' && <OfflineSetupView onBack={() => setView('offlineModeSelect')} onCreateLobby={(rules) => createLobby(rules, true)} />}
-        {view === 'offlineJoin' && <OfflineJoinView onBack={() => setView('offlineModeSelect')} onJoin={handleJoinLobby} />}
+        {view === 'profile' && <ProfileView user={user} onUpdate={handleUpdateProfile} onBack={() => { playSFX('click'); setView('home'); }} playSFX={playSFX} />}
+        {view === 'settings' && <SettingsView settings={settings} onUpdate={setSettings} onBack={() => { playSFX('click'); setView('home'); }} playSFX={playSFX} />}
+        {view === 'mailbox' && <MailboxView requests={user.requests} onAccept={(id) => { playSFX('click'); }} onReject={(id) => { playSFX('click'); }} onBack={() => { playSFX('click'); setView('home'); }} playSFX={playSFX} />}
+        {view === 'addFriend' && <AddFriendView onBack={() => { playSFX('click'); setView('home'); }} onInvite={(id) => { playSFX('click'); alert(`Invitation sent to ${id}`); }} playSFX={playSFX} />}
+        {view === 'offlineSetup' && <OfflineSetupView onBack={() => { playSFX('click'); setView('offlineModeSelect'); }} onCreateLobby={(rules) => createLobby(rules, true)} playSFX={playSFX} />}
+        {view === 'offlineJoin' && <OfflineJoinView onBack={() => { playSFX('click'); setView('offlineModeSelect'); }} onJoin={handleJoinLobby} playSFX={playSFX} />}
       </div>
 
-      {notification && <NotificationToast message={notification.message} onClick={() => {}} onClose={() => setNotification(null)} />}
+      {notification && <NotificationToast message={notification.message} onClick={() => { playSFX('click'); }} onClose={() => { playSFX('click'); setNotification(null); }} />}
     </div>
   );
 };

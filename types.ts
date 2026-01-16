@@ -11,7 +11,8 @@ export interface Card {
   id: string;
   color: CardColor;
   value: CardValue;
-  secondaryValue?: CardValue; // Used for Hybrid cards (e.g. Skip + Draw4)
+  secondaryValue?: CardValue; 
+  components?: Card[]; 
 }
 
 export type GameMode = 'OFFLINE' | 'ONLINE';
@@ -28,9 +29,11 @@ export interface Player {
   avatar: string;
   isBot: boolean;
   hand: Card[];
+  finalHand?: Card[];
   isReady?: boolean;
   isEliminated?: boolean;
-  isVanished?: boolean;
+  isFinished?: boolean;
+  rank?: number;
 }
 
 export interface FriendRequest {
@@ -53,6 +56,7 @@ export interface UserProfile {
 export interface GameSettings {
   theme: 'classic' | 'dark' | 'neon';
   sfx: boolean;
+  music: boolean;
 }
 
 export interface Lobby {

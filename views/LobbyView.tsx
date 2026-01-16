@@ -2,25 +2,32 @@
 import React, { useState } from 'react';
 import { Lobby, Player, UserProfile } from '../types';
 import { ChevronLeft, Share2, Copy, Check, UserPlus, PlayCircle, Users, Info } from 'lucide-react';
-import { AVATARS } from '../constants';
+import { AVATARS, SOUNDS } from '../constants';
 
 interface LobbyViewProps {
   user: UserProfile;
   lobby: Lobby;
   onBack: () => void;
   onStart: () => void;
+  playSFX: (s: keyof typeof SOUNDS) => void;
 }
 
-const LobbyView: React.FC<LobbyViewProps> = ({ user, lobby, onBack, onStart }) => {
+const LobbyView: React.FC<LobbyViewProps> = ({ user, lobby, onBack, onStart, playSFX }) => {
   const [copied, setCopied] = useState(false);
   const isHost = lobby.hostId === user.id;
 
   const joinLink = `https://gemini-uno.io/join/${lobby.id.replace(/\s+/g, '-').toLowerCase()}`;
 
   const copyLink = () => {
+    playSFX('click');
     navigator.clipboard.writeText(joinLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleInvite = (friendName: string) => {
+    playSFX('click');
+    alert(`Invitation sent to ${friendName}`);
   };
 
   // Mock online friends to invite
@@ -82,7 +89,7 @@ const LobbyView: React.FC<LobbyViewProps> = ({ user, lobby, onBack, onStart }) =
                 <button 
                   key={friend.id}
                   className="shrink-0 flex flex-col items-center gap-2 group active:scale-95 transition-all"
-                  onClick={() => alert(`Invitation sent to ${friend.name}`)}
+                  onClick={() => handleInvite(friend.name)}
                 >
                   <div className="relative">
                     <img src={friend.avatar} className="w-10 h-10 rounded-full border-2 border-white/10 group-hover:border-blue-400" alt="friend" />

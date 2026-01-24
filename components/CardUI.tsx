@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardColor } from '../types';
-import { Ghost, MousePointer2, Hand, HelpCircle } from 'lucide-react';
+import { Ghost, MousePointer2, Hand, HelpCircle, Layers, RefreshCcw } from 'lucide-react';
 
 interface CardUIProps {
   card: Card;
@@ -50,6 +50,8 @@ const CardUI: React.FC<CardUIProps> = ({
       case 'elitereverse': return 'Elite R';
       case 'all4': return 'All+4';
       case 'hybrid': return 'Hybrid';
+      case 'allIn': return 'All In';
+      case 'again': return 'Again';
       default: return val.toUpperCase();
     }
   };
@@ -153,6 +155,30 @@ const CardUI: React.FC<CardUIProps> = ({
           <div className="absolute bottom-0 left-0 right-0 bg-white text-black font-game text-[6px] py-1 tracking-tighter text-center uppercase">
             WILD HYBRID ATTACK
           </div>
+        </div>
+      );
+    }
+
+    if (card.value === 'allIn') {
+      return (
+        <div className={`w-full h-full ${colorMap[card.color]} border-2 border-white rounded-xl relative overflow-hidden flex flex-col items-center justify-center shadow-lg`}>
+          <div className="z-10 bg-white/20 backdrop-blur-sm rounded-full w-[85%] h-[80%] flex flex-col items-center justify-center border border-white/30 rotate-6">
+             <Layers className="text-white mb-1" size={size === 'lg' ? 32 : 20} />
+             <span className="font-game text-white text-[8px] uppercase">All In</span>
+          </div>
+          <div className="absolute top-1 left-1 font-bold text-white text-[8px]">ALL</div>
+        </div>
+      );
+    }
+
+    if (card.value === 'again') {
+      return (
+        <div className={`w-full h-full ${colorMap[card.color]} border-2 border-white rounded-xl relative overflow-hidden flex flex-col items-center justify-center shadow-lg`}>
+          <div className="z-10 bg-white/20 backdrop-blur-sm rounded-full w-[85%] h-[80%] flex flex-col items-center justify-center border border-white/30 -rotate-6">
+             <RefreshCcw className="text-white mb-1" size={size === 'lg' ? 32 : 20} />
+             <span className="font-game text-white text-[8px] uppercase">Again</span>
+          </div>
+          <div className="absolute top-1 left-1 font-bold text-white text-[8px]">X2</div>
         </div>
       );
     }

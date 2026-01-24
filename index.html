@@ -24,6 +24,24 @@
         from { transform: translateY(100%) rotate(10deg); opacity: 0; }
         to { transform: translateY(0) rotate(0); opacity: 1; }
       }
+      @keyframes card-deploy {
+        0% { transform: scale(2) translateY(-100px) rotate(25deg); opacity: 0; filter: blur(10px); }
+        100% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; filter: blur(0); }
+      }
+      /* Smooth reveal from deck to center */
+      @keyframes draw-reveal-in {
+        0% { transform: translate(-35vw, 15vh) scale(0.1) rotate(-45deg); opacity: 0; }
+        100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
+      }
+      /* Smooth move from center to hand */
+      @keyframes draw-reveal-out {
+        0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
+        100% { transform: translate(0, 50vh) scale(0.4) rotate(15deg); opacity: 0; }
+      }
+      @keyframes card-all-in-fly {
+        0% { transform: translate(var(--start-x), var(--start-y)) rotate(var(--start-rot)) scale(1); opacity: 1; }
+        100% { transform: translate(0, 0) rotate(0deg) scale(0.5); opacity: 0; }
+      }
       @keyframes bounce-in {
         0% { transform: translateY(-100%); opacity: 0; }
         60% { transform: translateY(10%); opacity: 1; }
@@ -37,20 +55,28 @@
         0%, 100% { box-shadow: 0 0 15px rgba(255, 255, 255, 0.2); }
         50% { box-shadow: 0 0 35px rgba(255, 255, 255, 0.6), 0 0 10px rgba(234, 179, 8, 0.4); }
       }
-      @keyframes card-blast-left {
-        0% { transform: translate(0, 0) scale(0.5) rotate(0); opacity: 0; }
-        100% { transform: translate(-100px, -20px) scale(1) rotate(-15deg); opacity: 1; }
-      }
-      @keyframes card-blast-right {
-        0% { transform: translate(0, 0) scale(0.5) rotate(0); opacity: 0; }
-        100% { transform: translate(100px, -20px) scale(1) rotate(15deg); opacity: 1; }
-      }
       @keyframes fade-in {
         from { opacity: 0; }
         to { opacity: 1; }
       }
+      @keyframes vanish-pulse {
+        0%, 100% { opacity: 0.3; filter: blur(2px); transform: scale(0.95); }
+        50% { opacity: 0.1; filter: blur(8px); transform: scale(1.05); }
+      }
       .animate-card-draw {
-        animation: card-draw 0.3s ease-out forwards;
+        animation: card-draw 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      }
+      .animate-card-deploy {
+        animation: card-deploy 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      }
+      .animate-draw-reveal-in {
+        animation: draw-reveal-in 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+      }
+      .animate-draw-reveal-out {
+        animation: draw-reveal-out 0.6s cubic-bezier(0.755, 0.05, 0.855, 0.06) forwards;
+      }
+      .animate-all-in-fly {
+        animation: card-all-in-fly 0.8s cubic-bezier(0.19, 1, 0.22, 1) forwards;
       }
       .animate-bounce-in {
         animation: bounce-in 0.5s ease-out forwards;
@@ -61,14 +87,11 @@
       .animate-tactical-glow {
         animation: tactical-glow 2s ease-in-out infinite;
       }
-      .animate-blast-left {
-        animation: card-blast-left 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-      }
-      .animate-blast-right {
-        animation: card-blast-right 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-      }
       .animate-fade-in {
         animation: fade-in 0.3s ease-out forwards;
+      }
+      .animate-vanish-pulse {
+        animation: vanish-pulse 3s ease-in-out infinite;
       }
       .scrollbar-hide::-webkit-scrollbar {
         display: none;

@@ -5,7 +5,7 @@ export type CardValue =
   | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' 
   | 'skip' | 'reverse' | 'draw2' | 'wild' | 'draw4' 
   | 'draw6' | 'draw10' | 'reverse4' | 'vanishing' | 'ghostswap' 
-  | 'elitereverse' | 'hybrid' | 'all4';
+  | 'elitereverse' | 'hybrid' | 'all4' | 'allIn' | 'again';
 
 export interface Card {
   id: string;
@@ -33,6 +33,7 @@ export interface Player {
   isReady?: boolean;
   isEliminated?: boolean;
   isFinished?: boolean;
+  isVanished?: boolean;
   rank?: number;
 }
 
